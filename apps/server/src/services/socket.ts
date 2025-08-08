@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import Redis from "ioredis";
+import { produceMessage } from "./kafka";
 
 const password = process.env.AIVEN_PASSWORD;
 
@@ -47,9 +48,11 @@ class SocketService {
         await pub.publish("MESSAGES", JSON.stringify({ message }));
       });
     });
-    sub.on("message", (channel, message) => {
+    sub.on("message", async (channel, message) => {
       if (channel === "MESSAGES") {
         io.emit("message", message);
+        await produceMessage(message)
+        console.log(`Message produced to Kafka broker`)
       }
     });
   }
